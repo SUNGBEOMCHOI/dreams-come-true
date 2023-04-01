@@ -10,8 +10,7 @@ class Client:
             cfg: The configuration file for the client.    
         """
         self.frequency = cfg['frequency']
-        self.client_cfg = cfg['client']
-        self.camera_cfg = self.client_cfg['camera']
+        self.camera_cfg = cfg['camera']
         self.communication_cfg = cfg['communication']
 
         self.camera = CameraModule(self.camera_cfg)
