@@ -1,0 +1,24 @@
+robot:
+  action:
+client:
+  frequency: 60
+  camera:
+    ball_template_path: assets\ball_template.png
+    robot_template_path: assets\robot_template.png
+    reward_condition:
+      ball_position:
+        ... # TODO: add ball position reward condition
+      done: 1.0
+    done_condition:
+      ball_position:
+        ... # TODO: add ball position done condition
+      max_time:  # TODO: add max time done condition
+server:
+  frequency: 60
+  # TODO: add server config
+communication:
+    car_a_ip: 192.168.0.201
+    car_b_ip: 192.168.0.202
+    client_ip: 127.0.0.1
+    port: 5000
+    server_ip: 192.168.0.203
