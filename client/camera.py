@@ -44,7 +44,7 @@ class CameraModule:
         """
         Gets the current observation, reward and done or not from the camera. 
         observation includes the preprocessed frame, the position of the ball in the 
-            frame, and the position and angle of the robot in the frame.
+            frame, and the position of the robot in the frame.
 
         Returns:
             observation: The current observation from the camera.

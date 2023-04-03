@@ -1,4 +1,6 @@
 import socket
+import struct
+import numpy as np
 
 class ClientCommunication:
     def __init__(self, cfg):
@@ -7,17 +9,19 @@ class ClientCommunication:
         self.server_ip = communication_cfg['server_ip']
         self.carA_ip = communication_cfg['carA_ip']
         self.carB_ip = communication_cfg['carB_ip']
-        self.port = communication_cfg['port']
+        self.client_port = communication_cfg['client_port']
+        self.server_port = communication_cfg['server_port']
 
-        self.Client2Server = Client2Server(self.local_ip, self.server_ip, self.port)
-        self.Client2R = Client2Car(self.local_ip, self.carA_ip, self.port)
+        self.client2server = Client2Server(self.local_ip, self.server_ip, self.server_port)
+        self.client2car = Client2Car(self.local_ip, self.carA_ip, self.carB_ip, self.client_port)
 
     def connect(self):
         """
         Connect to the car and server
         """
         # TODO: print for connected or not connected
-        raise NotImplementedError
+        self.client2car.server_init()
+        self.client2server.server_init()
 
     def send_action_to_robot(self, robot, action):
         """
@@ -25,30 +29,31 @@ class ClientCommunication:
 
         Args:
             robot: robot name, It can be 'A' or 'B'
-            action: action
+            action: action, action is a list of 2 float numbers (left wheel speed, right wheel speed)
         """
-        raise NotImplementedError
+        self.client2car.send_action(robot, action)
 
-    def send_obs_to_server(self, obs):
+    def send_info_to_server(self, info):
         """
-        Send observation to server
+        Send information to server
 
         Args:
-            obs: observation
+            info: information which contains (observation, reward, done)
         """
-        raise NotImplementedError
+        self.client2server.send_info(info)
 
     def receive_action_from_server(self):
         """
         Receive action from server
         """
-        raise NotImplementedError
+        return self.client2server.receive_action()
 
     def close(self):
         """
         Close robot and server connection
         """
-        raise NotImplementedError
+        self.client2server.close()
+        self.client2car.close()
 
 
 
@@ -61,13 +66,12 @@ class Client2Car():
             local_ip: local ip address
             car_a_ip: car A ip address
             car_b_ip: car B ip address
-            port: port number        
+            port: client port number        
         """
         self.local_ip = local_ip
         self.carA_ip = car_a_ip
         self.carB_ip = car_b_ip
         self.port = port
-        self.server_init() # initialize server
         self.bufferSize = 1024
 
     def server_init(self):
@@ -98,38 +102,65 @@ class Client2Car():
         message = str(f'{speed[0]}&{speed[1]}').encode()
         self.sock.sendto(message, (self.carA_ip, self.port))
 
+    def close(self):
+        """
+        Close robot connection
+        """
+        self.sock.close()
+
 class Client2Server:
-    def __init__(self, local_ip, server_ip, port=1234):
+    def __init__(self, local_ip, server_ip, server_port=1234):
         """
         TCP Client for communication with robot
         
         Args:
             local_ip: local ip address
             server_ip: server ip address
-            port: port number        
+            port: server port number        
         """
         self.local_ip = local_ip
         self.server_ip = server_ip
-        self.port = port
-        self.server_init() # initialize server
+        self.server_port = server_port
         
     def server_init(self):
         """
         Initialize TCP server
         """
-        raise NotImplementedError
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((self.server_ip, self.server_port))
     
-    def send_obs(self, obs):
+    def send_info(self, info):
         """
-        Send observation to server
+        Send observation, reward, done to server
 
         Args:
-            obs: observation
+            info: infomation which contains (observation, reward, done)
         """
-        raise NotImplementedError
+        observation, reward, done = info # reward shape [1], done shape [1]
+        cropped_frame, ball_position, robot_info = observation # cropped_frame shape [3, 64, 64], ball_position shape [2], robot_info shape [2]
+        arrays = [[cropped_frame, ball_position, robot_info], reward, done]
+
+        packed_data = b''
+        packed_data += struct.pack('i', len(arrays))
+        for array in arrays:
+            packed_data += struct.pack('iii', array.nbytes, *array.shape)
+            packed_data += array.tobytes()
+
+        self.sock.sendall(packed_data)
     
     def receive_action(self):
         """
         Receive action from server
+
+        Returns: action (left wheel speed, right wheel speed)
         """
-        raise NotImplementedError
+        data = self.sock.recv(9) # Receive 9 bytes (1 byte for robot and 8 bytes for action)
+        robot_byte, action = struct.unpack('c2f', data) # Unpack the robot type and action
+        robot = robot_byte.decode() # Decode the robot type back to a string
+        return robot, action
+    
+    def close(self):
+        """
+        Close server connection
+        """
+        self.sock.close()

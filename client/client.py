@@ -1,3 +1,5 @@
+import time
+
 from communication  import ClientCommunication
 from camera import CameraModule
 
@@ -27,7 +29,26 @@ class Client:
         """
         Run the client
         """
-        raise NotImplementedError
+        while True:
+            # Loop every 1/self.frequency seconds
+            time.sleep(1/self.frequency)
+
+            # Get observation from camera
+            info = self.camera.get_info() # info = (observation, reward, done)
+            _, _, done = info
+
+            # Send observation to server
+            self.communication.send_info_to_server(info)
+
+            # If done in observation: break
+            if done:
+                break
+
+            # Receive action from server
+            robot, action = self.communication.receive_action_from_server()
+
+            # Send action to robot
+            self.communication.send_action_to_robot(robot, action)
 
     def close(self):
         """
