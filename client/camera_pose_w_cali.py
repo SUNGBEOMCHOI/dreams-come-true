@@ -14,8 +14,8 @@ def calibration(cap):
     objp = np.zeros((6*7,3), np.float32)
     objp[:,:2] = np.mgrid[0:7,0:6].T.reshape(-1,2)
 
-    objpoints = [] # 3d point in real world space
-    imgpoints = [] # 2d points in image plane.
+    objpoints = []
+    imgpoints = []
 
     images = glob.glob('calib_images/test_checkerboard/*.png')
 
@@ -53,8 +53,6 @@ def aruco_detect(cap, ret, mtx, dist, rvecs, tvecs):
 
             for i in range(0, ids.size):
                 frame_makrers_1 = cv2.drawFrameAxes(frame.copy(), mtx, dist, rvec[i], tvec[i], 0.1)
-            # draw a square around the markers
-            # aruco.drawDetectedMarkers(frame_makrers_1, corners)
 
             frame_markers_2 = aruco.drawDetectedMarkers(frame_makrers_1.copy(), corners, ids)
                 
