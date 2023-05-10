@@ -59,38 +59,10 @@ def main(config):
 
     acts = eval_envs[0].action_space
     config.num_actions = acts.shape[0]
-    # If there's no data, make dataset with random agent
-    # acts = train_envs[0].action_space
-    # config.num_actions = acts.n if hasattr(acts, "n") else acts.shape[0]
 
-    # if not config.offline_traindir:
-    #     prefill = max(0, config.prefill - count_steps(config.traindir))
-    #     print(f"Prefill dataset ({prefill} steps).")
-    #     if hasattr(acts, "discrete"):
-    #         random_actor = tools.OneHotDist(
-    #             torch.zeros(config.num_actions).repeat(config.envs, 1)
-    #         )
-    #     else:
-    #         random_actor = torchd.independent.Independent(
-    #             torchd.uniform.Uniform(
-    #                 torch.Tensor(acts.low).repeat(config.envs, 1),
-    #                 torch.Tensor(acts.high).repeat(config.envs, 1),
-    #             ),
-    #             1,
-    #         )
-
-    #     def random_agent(o, d, s, r):
-    #         action = random_actor.sample()
-    #         logprob = random_actor.log_prob(action)
-    #         return {"action": action, "logprob": logprob}, None
-
-    #     tools.simulate(random_agent, train_envs, prefill)
-    #     logger.step = config.action_repeat * count_steps(config.traindir)
 
 
     print("Simulate agent.")
-    # train_dataset = make_dataset(train_eps, config)
-    # eval_dataset = make_dataset(eval_eps, config)
     agent1 = Client_Dreamer(config, logger).to(config.device)
     agent2 = Client_Dreamer(config, logger).to(config.device)
     agent1.requires_grad_(requires_grad=False)
@@ -110,9 +82,7 @@ def main(config):
         tools.simulate(eval_policy1, eval_policy2, eval_envs, episodes=config.eval_episode_num)
         # video_pred = agent._wm.video_pred(next(eval_dataset))
         # logger.video("eval_openl", to_np(video_pred))
-        # print("Start training.")
-        # state = tools.simulate(agent, train_envs, config.eval_every, state=state)
-        # torch.save(agent.state_dict(), logdir / "latest_model.pt")
+
     # for env in train_envs + eval_envs:
     #     try:
     #         env.close()
@@ -198,7 +168,7 @@ class ProcessEpisodeWrap:
         length = len(episode["reward"]) - 1
         score = float(episode["reward"].astype(np.float64).sum())
         video = episode["image"]
-        cache[str(filename)] = episode
+        cache[str(filename)] = episode``
         if mode == "train":
             total = 0
             for key, ep in reversed(sorted(cache.items(), key=lambda x: x[0])):
