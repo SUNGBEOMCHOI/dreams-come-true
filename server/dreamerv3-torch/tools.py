@@ -166,6 +166,55 @@ def simulate(agent, envs, steps=0, episodes=0, state=None):
 
     return (step - steps, episode - episodes, done, length, obs, agent_state, reward)
 
+def simulate(agent1, agent2, envs, steps=0, episodes=0, state=None):
+    # Initialize or unpack simulation state.
+    if state is None:
+        step, episode = 0, 0
+        done = np.ones(len(envs), np.bool)
+        length = np.zeros(len(envs), np.int32)
+        obs = [None] * len(envs)
+        agent_state = None
+        reward = [0] * len(envs)
+    else:
+        step, episode, done, length, obs, agent_state, reward = state
+    while (steps and step < steps) or (episodes and episode < episodes):
+        # Reset envs if necessary.
+        if done.any():
+            indices = [index for index, d in enumerate(done) if d]
+            results = [envs[i].reset() for i in indices]
+            for index, result in zip(indices, results):
+                obs[index] = result
+            reward = [reward[i] * (1 - done[i]) for i in range(len(envs))]
+        # Step agents.
+        obs = {k: np.stack([o[k] for o in obs]) for k in obs[0]}
+        action2, _ = agent2(obs, done, agent_state, reward)
+        action1, agent_state = agent1(obs, done, agent_state, reward)
+        if isinstance(action1, dict):
+            action1 = [
+                {k: np.array(action[k][i].detach().cpu()) for k in action}
+                for i in range(len(envs))
+            ]
+            action2 = [
+                {k: np.array(action[k][i].detach().cpu()) for k in action}
+                for i in range(len(envs))
+            ]
+        else:
+            action1 = np.array(action1)
+            action2 = np.array(action2)
+        assert len(action1) == len(envs)
+        # Step envs.
+        results = [e.step(a1, a2) for e, a1, a2 in zip(envs, action1, action2)]
+        obs, reward, done = zip(*[p[:3] for p in results])
+        obs = list(obs)
+        reward = list(reward)
+        done = np.stack(done)
+        episode += int(done.sum())
+        length += 1
+        step += (done * length).sum()
+        length *= 1 - done
+
+    return (step - steps, episode - episodes, done, length, obs, agent_state, reward)
+
 
 def save_episodes(directory, episodes):
     directory = pathlib.Path(directory).expanduser()

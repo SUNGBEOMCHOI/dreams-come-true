@@ -350,23 +350,29 @@ def main(config):
     print("Simulate agent.")
     train_dataset = make_dataset(train_eps, config)
     eval_dataset = make_dataset(eval_eps, config)
-    agent = Dreamer(config, logger, train_dataset).to(config.device)
-    agent.requires_grad_(requires_grad=False)
+    agent1 = Dreamer(config, logger, train_dataset).to(config.device)
+    agent2 = Dreamer(config, logger, train_dataset).to(config.device)
+    agent1.requires_grad_(requires_grad=False)
+    agent2.requires_grad_(requires_grad=False)
+
     if (logdir / "latest_model.pt").exists():
-        agent.load_state_dict(torch.load(logdir / "latest_model.pt"))
-        agent._should_pretrain._once = False
+        agent1.load_state_dict(torch.load(logdir / "latest_model.pt"))
+        agent2.load_state_dict(torch.load(logdir / "latest_model.pt"))
+        agent1._should_pretrain._once = False
+        agent2._should_pretrain._once = False
 
     state = None
-    while agent._step < config.steps:
+    while agent1._step < config.steps:
         logger.write()
         print("Start evaluation.")
-        eval_policy = functools.partial(agent, training=False)
-        tools.simulate(eval_policy, eval_envs, episodes=config.eval_episode_num)
-        video_pred = agent._wm.video_pred(next(eval_dataset))
+        eval_policy1 = functools.partial(agent1, training=False)
+        eval_policy2 = functools.partial(agent2, training=False)
+        tools.simulate(eval_policy1, eval_policy2, eval_envs, episodes=config.eval_episode_num)
+        video_pred = agent1._wm.video_pred(next(eval_dataset))
         logger.video("eval_openl", to_np(video_pred))
         print("Start training.")
-        state = tools.simulate(agent, train_envs, config.eval_every, state=state)
-        torch.save(agent.state_dict(), logdir / "latest_model.pt")
+        state = tools.simulate(agent1, agent2, train_envs, config.eval_every, state=state)
+        torch.save(agent1.state_dict(), logdir / "latest_model.pt")
     for env in train_envs + eval_envs:
         try:
             env.close()
