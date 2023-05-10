@@ -22,7 +22,7 @@ class MainWorker(QObject):
             while rc.available():
                 rc.worker.Act('A', 'W')
                 time.sleep(1)
-                rc.worekr.Act('A', 'S')
+                rc.worker.Act('A', 'S')
                 time.sleep(1)
             print('Robots are not available')
             time.sleep(1)
