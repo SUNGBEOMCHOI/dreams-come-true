@@ -25,6 +25,7 @@ class MainWorker(QObject):
                 rc.worekr.Act('A', 'S')
                 time.sleep(1)
             print('Robots are not available')
+            time.sleep(1)
         return
  ####   
     
