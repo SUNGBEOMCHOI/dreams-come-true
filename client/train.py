@@ -6,23 +6,30 @@ Created on Tue May  9 14:28:58 2023
 """
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-import time
+import time, sys
+from RCServer import RCServer
 
+# do not modify
+app = QApplication(sys.argv)
+rc = RCServer()
 
+####
 class MainWorker(QObject):    
     @pyqtSlot()
     def main(self):
         # main training Code Here :)
         while True:
-            print("Main Thread!")
-            time.sleep(1)
+            while rc.available():
+                rc.worker.Act('A', 'W')
+                time.sleep(1)
+                rc.worekr.Act('A', 'S')
+                time.sleep(1)
+            print('Robots are not available')
         return
-    
-    
-    
-    
+ ####   
     
 # do not modifiy
-from RCServer import start  
 main = MainWorker()
-start(main)
+rc.setMain(main)
+rc.show()
+sys.exit(app.exec_())
