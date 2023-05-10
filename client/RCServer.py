@@ -149,14 +149,13 @@ class RCServer(QMainWindow, form_class):
     ServerEnd = pyqtSignal()
     MainStart = pyqtSignal()
     
-    def __init__(self, carA_ip='192.168.0.201', carB_ip='192.168.0.13', port=1239, protocol='tcp', Main=None):
+    def __init__(self, carA_ip='192.168.0.201', carB_ip='192.168.0.13', port=1239, protocol='tcp'):
         super().__init__()
         self.setWindowTitle('Dreams Come True')
         self.setupUi(self)
         self.Manual = None
         # Qt
         
-        self.mainworker = Main
         self.worker = ServerWorker(port=port, protocol=protocol)
         # Server
         
@@ -165,21 +164,24 @@ class RCServer(QMainWindow, form_class):
         self.worker.moveToThread(self.thread)
         self.thread.start()
         
+        self.worker.update.connect(self.update)
+        self.AcceptStart.connect(self.worker.Run)
+        self.ServerEnd.connect(self.worker.Stop)
+        self.AcceptStart.emit()
+        
+        self.Manual_A.released.connect(self.manualModeA)
+        self.Manual_B.released.connect(self.manualModeB)
+    
+    def setMain(self, main):
+        self.mainworker = main
         self.mainthread = QThread()
         self.mainworker.moveToThread(self.mainthread)
         self.mainthread.start()
         
-        self.worker.update.connect(self.update)
-        self.AcceptStart.connect(self.worker.Run)
-        self.ServerEnd.connect(self.worker.Stop)
         self.MainStart.connect(self.mainworker.main)
-        self.AcceptStart.emit()
         self.MainStart.emit()
         
-        self.Manual_A.released.connect(self.manualModeA)
-        self.Manual_B.released.connect(self.manualModeB)
-        self.show()
-    
+        
     def keyPressEvent(self, e):
         if self.Manual is not None:
             if e.key() == Qt.Key_W:
@@ -210,6 +212,9 @@ class RCServer(QMainWindow, form_class):
         else:
             self.Manual = 'B'
             self.Manual_Status.setText('B')
+            
+    def available(self):
+        return self.worker.A[1] and self.worker.B[1]
         
     
     @pyqtSlot(Information)     
@@ -242,10 +247,3 @@ class RCServer(QMainWindow, form_class):
             event.accept()
         else:
             event.ignore()
-
-def start(main):
-    app = QApplication(sys.argv)
-    server = RCServer(Main=main)
-    server.show()
-    sys.exit(app.exec_())
-
