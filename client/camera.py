@@ -95,7 +95,6 @@ class CameraModule:
             ball_position = self.ball_tracker.track_ball(frame)
             robot_a_pos, robot_a_angle, robot_b_pos, robot_b_angle = self.robot_tracker.track_robot(frame)
             # pixel location to real world location
-            print(ball_position, robot_a_pos, robot_a_angle, robot_b_pos, robot_b_angle)
             ball_position, robot_a_pos, robot_b_pos, = \
                 [self.coord_transformer.transform_image_to_real(point) for point in [ball_position, robot_a_pos, robot_b_pos]]
             observation = [frame, ball_position, robot_a_pos, robot_a_angle, robot_b_pos, robot_b_angle]
@@ -200,11 +199,14 @@ class BallTracker:
         Args:
             ball_template_path: Path to the ball template image.        
         """
-        ball_template_path = ball_cfg['template_path']
+        ball_template_paths = ball_cfg['template_path']
         self.boundary_points = ball_cfg['boundary_points']
-        self.ball_template = cv2.imread(ball_template_path) 
-        _, self.w, self.h = self.ball_template.shape[::-1]  # Template width and height
-        print(self.w, self.h)
+        self.ball_template_list = []
+        for ball_template_path in ball_template_paths:
+            self.ball_template_list.append(cv2.imread(ball_template_path))
+        # self.ball_template = cv2.imread(ball_template_path) 
+        # _, self.w, self.h = ball_template_path[0].shape[::-1]  # Template width and height
+        # print(self.w, self.h)
 
     def track_ball(self, frame):
         """
@@ -222,35 +224,38 @@ class BallTracker:
         results = []
 
         # Multi-scale template matching
-        for scale in np.linspace(0.9, 1.1, 10)[::-1]:
-            # Resize the image according to the scale, and keep track
-            # of the ratio of the resizing
-            resized_template = cv2.resize(self.ball_template, None, fx=scale, fy=scale)
-            r = self.ball_template.shape[1] / float(resized_template.shape[1])
+        for ball_template in self.ball_template_list:
+            # Loop over the scales of the image
+            for scale in np.linspace(0.95, 1.05, 3)[::-1]:
+                # Resize the image according to the scale, and keep track
+                # of the ratio of the resizing
+                _, w, h = ball_template.shape[::-1]
+                resized_template = cv2.resize(ball_template, None, fx=scale, fy=scale)
+                r = ball_template.shape[1] / float(resized_template.shape[1])
 
-            # If the resized image is smaller than the template, then break
-            # from the loop
-            if resized_template.shape[0] > frame.shape[0] or resized_template.shape[1] > frame.shape[1]:
-                break
-            
-            # Apply template matching to find the template in the image
-            res = cv2.matchTemplate(frame, resized_template, cv2.TM_CCOEFF_NORMED)
-            (_, maxVal, _, maxLoc) = cv2.minMaxLoc(res)
-            if (self.boundary_points[0][0] < maxLoc[0] * r < self.boundary_points[0][1]) and (self.boundary_points[1][0] < maxLoc[1] * r < self.boundary_points[1][1]):
-                pass
-            else:
-                continue
+                # If the resized image is smaller than the template, then break
+                # from the loop
+                if resized_template.shape[0] > frame.shape[0] or resized_template.shape[1] > frame.shape[1]:
+                    break
+                
+                # Apply template matching to find the template in the image
+                res = cv2.matchTemplate(frame, resized_template, cv2.TM_CCOEFF_NORMED)
+                (_, maxVal, _, maxLoc) = cv2.minMaxLoc(res)
+                if (self.boundary_points[0][0] < maxLoc[0] * r < self.boundary_points[0][1]) and (self.boundary_points[1][0] < maxLoc[1] * r < self.boundary_points[1][1]):
+                    pass
+                else:
+                    continue
 
-            # Save the result
-            results.append((maxVal, maxLoc, r))
+                # Save the result
+                results.append((maxVal, maxLoc, r, w, h))
         if len(results) == 0:
             return None
         # Select the best match with the highest value
-        (_, maxLoc, r) = max(results, key=lambda x: x[0])
+        (_, maxLoc, r, w, h) = max(results, key=lambda x: x[0])
 
         # Compute the (x, y) coordinates of the bounding box for the object
         (startX, startY) = (int(maxLoc[0] * r), int(maxLoc[1] * r))
-        (endX, endY) = (int((maxLoc[0] + self.w) * r), int((maxLoc[1] + self.h) * r))
+        (endX, endY) = (int((maxLoc[0] + w) * r), int((maxLoc[1] + h) * r))
         center = (int((startX + endX) / 2), int((startY + endY) / 2))
 
         return center
@@ -433,30 +438,30 @@ class CoordinateTransformer:
         return transformed_point[0][0]
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--config', type=str, default='./config.yaml', help='Path to config file')
-    # args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, default='./config.yaml', help='Path to config file')
+    args = parser.parse_args()
 
-    # with open(args.config) as f:
-    #     cfg = yaml.safe_load(f)
-    # camera = CameraModule(cfg)
-    # frame = cv2.imread('./ball1150_0.jpg')
-    # if frame is None:
-    #     print("Failed to capture frame or load image.")
-    # else:
-    #     cv2.imshow('image', frame)
-    #     cv2.waitKey(1000)
+    with open(args.config) as f:
+        cfg = yaml.safe_load(f)
+    camera = CameraModule(cfg)
+    frame = cv2.imread('./ball1150_548.jpg')
+    if frame is None:
+        print("Failed to capture frame or load image.")
+    else:
+        cv2.imshow('image', frame)
+        cv2.waitKey(1000)
 
-    # ball_pos = camera.ball_tracker.track_ball(frame)
-    # ball_coord = camera.coord_transformer.transform_image_to_real(ball_pos)
-    # ball_position = [camera.coord_transformer.transform_real_to_image(point) for point in [ball_coord]][0]
-    # # draw ball and robot on the frame
-    # cv2.circle(frame, ball_pos, 10, (0, 0, 255), -1)
-    # cv2.imshow('image', frame)
-    # cv2.waitKey(5000)
-    # done = camera.done_processor.is_terminate(ball_coord)
-    # reward = camera.reward_processor.get_reward(ball_coord, done)
-    # print(done, reward)
+    ball_pos = camera.ball_tracker.track_ball(frame)
+    ball_coord = camera.coord_transformer.transform_image_to_real(ball_pos)
+    ball_position = [camera.coord_transformer.transform_real_to_image(point) for point in [ball_coord]][0]
+    # draw ball and robot on the frame
+    cv2.circle(frame, ball_pos, 10, (0, 0, 255), -1)
+    cv2.imshow('image', frame)
+    cv2.waitKey(5000)
+    done = camera.done_processor.is_terminate(ball_coord)
+    reward = camera.reward_processor.get_reward(ball_coord, done)
+    print(done, reward)
 
 
     # camera.camera_init()
