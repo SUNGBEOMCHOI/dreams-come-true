@@ -1,15 +1,37 @@
 frequency: 60
 camera:
-  ball_template_path: assets\ball_template.png
-  robot_template_path: assets\robot_template.png
+  camera_index: 1
+  calibrate_image_path: ../assets
+  ball:
+    template_path: ../assets/ball_template.jpg
+    boundary_points:
+      - [0, 645]
+      - [128, 428]
+  robot:
+    robot_a_aruco_id: 1
+    robot_b_aruco_id: 2
+
   reward_condition:
-    ball_position:
-      ... # TODO: add ball position reward condition
-    done: 1.0
+    ball_reward:
+      - [100, -0.01]
+      - [1050, 0.01]
+    done_reward:
+      - [100, -1]
+      - [1050, 1]
   done_condition:
-    ball_position:
-      ... # TODO: add ball position done condition
-    max_time:  # TODO: add max time done condition
+    - 100
+    - 1050
+  coord_transformer:
+    src_points:
+      - [10, 407]
+      - [635, 418]
+      - [52, 138]
+      - [610, 148]
+    dst_points:
+      - [0, 0]
+      - [1150, 0]
+      - [0, 548]
+      - [1150, 548]
 communication:
   car_a_ip: 192.168.0.201
   car_b_ip: 192.168.0.202
