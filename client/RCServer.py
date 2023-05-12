@@ -10,7 +10,7 @@ import signal
 import sys
 import time
 import select
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QImage, QPixmap
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5 import uic
@@ -184,7 +184,7 @@ class RCServer(QMainWindow, form_class):
     def updateStatus(self, frame, status):
         h, w, ch = frame.shape
         bytes_per_line = ch * w
-        image = QImage(rgb_frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(image)
         self.pixMap.setPixmap(pixmap)
         self.status.setText(status)
