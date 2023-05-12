@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1002</width>
-    <height>663</height>
+    <width>1266</width>
+    <height>855</height>
    </rect>
   </property>
   <property name="font">
@@ -19,21 +19,11 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QGraphicsView" name="View">
-    <property name="geometry">
-     <rect>
-      <x>250</x>
-      <y>10</y>
-      <width>501</width>
-      <height>281</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>310</y>
+      <x>160</x>
+      <y>500</y>
       <width>871</width>
       <height>301</height>
      </rect>
@@ -219,6 +209,32 @@
       </widget>
      </item>
     </layout>
+   </widget>
+   <widget class="QLabel" name="pixMap">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>10</y>
+      <width>640</width>
+      <height>431</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="status">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>460</y>
+      <width>1081</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>STEP: 0</string>
+    </property>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
