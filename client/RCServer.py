@@ -149,7 +149,7 @@ class RCServer(QMainWindow, form_class):
     ServerEnd = pyqtSignal()
     MainStart = pyqtSignal()
     
-    def __init__(self, carA_ip='192.168.0.201', carB_ip='192.168.0.13', port=1239, protocol='tcp'):
+    def __init__(self, carA_ip='192.168.0.201', carB_ip='192.168.0.13', port=2023, protocol='tcp'):
         super().__init__()
         self.setWindowTitle('Dreams Come True')
         self.setupUi(self)
@@ -181,6 +181,13 @@ class RCServer(QMainWindow, form_class):
         self.MainStart.connect(self.mainworker.main)
         self.MainStart.emit()
         
+    def updateStatus(self, frame, status):
+        h, w, ch = frame.shape
+        bytes_per_line = ch * w
+        image = QImage(rgb_frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        pixmap = QPixmap.fromImage(image)
+        self.pixMap.setPixmap(pixmap)
+        self.status.setText(status)
         
     def keyPressEvent(self, e):
         if self.Manual is not None:
