@@ -3,10 +3,17 @@ camera:
   camera_index: 1
   calibrate_image_path: ../assets
   ball:
-    template_path: ../assets/ball_template.jpg
+    template_path: 
+      - ../assets/ball_template.jpg
+      - ../assets/ball_template1.jpg
+      - ../assets/ball_template2.jpg
+      - ../assets/ball_template3.jpg
+      - ../assets/ball_template4.jpg
+      - ../assets/ball_template5.jpg
+      - ../assets/ball_template6.jpg
     boundary_points:
-      - [0, 645]
-      - [128, 428]
+      - [0, 644]
+      - [123, 421]
   robot:
     robot_a_aruco_id: 1
     robot_b_aruco_id: 2
@@ -23,10 +30,10 @@ camera:
     - 1050
   coord_transformer:
     src_points:
-      - [10, 407]
-      - [635, 418]
-      - [52, 138]
-      - [610, 148]
+      - [12, 404]
+      - [634, 411]
+      - [45, 133]
+      - [604, 141]
     dst_points:
       - [0, 0]
       - [1150, 0]
