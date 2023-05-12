@@ -56,13 +56,13 @@ class CameraModule:
             img = cv2.imread(fname)
             gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
-            ret, corners = cv2.findChessboardCorners(gray, (7,6),None)
+            ret, corners = cv2.findChessboardCorners(gray, (9,6),None)
 
             if ret == True:
                 objpoints.append(objp)
                 corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
                 imgpoints.append(corners2)
-                img = cv2.drawChessboardCorners(img, (7,6), corners2,ret)
+                img = cv2.drawChessboardCorners(img, (9,6), corners2,ret)
 
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
         # return ret, mtx, dist, rvecs, tvecs
